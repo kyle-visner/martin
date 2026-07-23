@@ -1,0 +1,5 @@
+module github.com/kyle-visner/martin
+
+go 1.22
+
+require github.com/kyle-visner/jaybase v0.1.2-0.20260718223132-e2e228e9769e
