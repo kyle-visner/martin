@@ -9,6 +9,43 @@ import (
 	"github.com/kyle-visner/jaybase"
 )
 
+func TestBDDAerieCommitsRemainForeignWhileAdvancingMartinRoot(t *testing.T) {
+	store, err := OpenStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	ctx := Context{Actor: "owner"}
+	if _, _, err := store.Initialize(ctx, "USD"); err != nil {
+		t.Fatal(err)
+	}
+	before, err := store.CurrentRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	aerieRoot, err := store.db.AppendAt(jaybase.Context{Actor: "aerie"}, jaybase.AppendOptions{
+		Type: "aerie.commit.created.v1", EntityID: "repository:default", Command: "commit",
+		Payload: map[string]any{"message": "Document onboarding"},
+	}, before)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.LoadState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Root != aerieRoot || state.Workspace == nil {
+		t.Fatalf("Martin did not advance across Aerie commit: %#v", state)
+	}
+	organization, root, err := store.CreateOrganization(ctx, Organization{Name: "After Aerie"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if organization.ID == "" || root == aerieRoot {
+		t.Fatalf("Martin did not append after Aerie root: organization=%#v root=%s", organization, root)
+	}
+}
+
 func TestOpinionatedDealWorkflow(t *testing.T) {
 	store, err := OpenStore(t.TempDir())
 	if err != nil {
