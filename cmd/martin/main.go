@@ -13,7 +13,7 @@ import (
 	"github.com/kyle-visner/martin/internal/martin"
 )
 
-const version = "0.1.0-dev"
+const version = "0.1.0"
 
 type app struct {
 	store *martin.Store

@@ -1,4 +1,7 @@
 .DS_Store
 .martin/
 /martin
+*.test
 coverage.out
+.benchmarks/
+dist/
