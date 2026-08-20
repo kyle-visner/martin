@@ -15,7 +15,7 @@ JSON imports. The CLI checks access and CRM invariants before appending an
 encrypted, immutable event to
 [Jaybase](https://github.com/kyle-visner/jaybase).
 
-Requires Go 1.26.5 or later. Earlier Go releases include known standard-library
+Requires Go 1.26.6 or later. Earlier Go releases include known standard-library
 vulnerabilities and must not be used to build release binaries:
 
 ```sh
@@ -92,6 +92,7 @@ AGPL-3.0-or-later. See `LICENSE`.
 - Idempotent normalized JSON imports keyed by `(source, source_key)`.
 - Optional encrypted, token-bound hosted projection checkpoints.
 - JSON command output by default for agent consumption.
+- First-class MCP server (`mcp`) over Streamable HTTP and stdio, using the same CRM operations as the CLI.
 - Automated tests for domain invariants, remote storage behavior, and CLI flows.
 
 ## The operating rule
@@ -110,7 +111,7 @@ Every open deal has exactly one pending next action.
 
 ## Build and verify
 
-Use Go 1.26.5 or later. From the repository root:
+Use Go 1.26.6 or later. From the repository root:
 
 ```sh
 go mod verify
@@ -199,6 +200,28 @@ Operational rules for agents:
 - Use Magpie for accounting facts; use Martin only for CRM facts and explicit
   customer links.
 - Create a `snapshot create --name NAME` before large agent workflows.
+
+MCP is an additional pathway over the same CRM operations. Init remains the
+CLI. The process `--actor` is bound at server start; clients cannot choose it.
+HTTP requires a loopback bind and a bearer token from `MARTIN_MCP_TOKEN` or
+`MARTIN_MCP_TOKEN_FILE`, separate from `JAYBASE_TOKEN`:
+
+```sh
+export MARTIN_MCP_TOKEN='mcp-token-from-the-secret-manager'
+
+./martin --actor owner mcp --http 127.0.0.1:8879
+```
+
+Omit `--http` for stdio. `GET /health` returns 200. Hosted Jaybase still uses
+`JAYBASE_URL` and `JAYBASE_TOKEN` as today:
+
+```sh
+export JAYBASE_URL=https://jaybase.example.com
+export JAYBASE_TOKEN='writer-token-from-the-secret-manager'
+export MARTIN_MCP_TOKEN='mcp-token-from-the-secret-manager'
+
+./martin --actor owner --jaybase-url "$JAYBASE_URL" mcp --http 127.0.0.1:8879
+```
 
 Errors look like:
 
@@ -339,6 +362,7 @@ deal create|advance|touch|win|lose|reopen|get|list
 activity log|list
 task create|complete|cancel|list
 customer link|unlink|get|list
+mcp [--http ADDR]
 ```
 
 Global flags must appear before the command:

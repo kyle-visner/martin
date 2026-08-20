@@ -16,8 +16,11 @@ import (
 const version = "0.1.0"
 
 type app struct {
-	store *martin.Store
-	ctx   martin.Context
+	store      *martin.Store
+	ctx        martin.Context
+	storeDir   string
+	jaybaseURL string
+	cacheDir   string
 }
 
 func main() {
@@ -70,7 +73,13 @@ func run(args []string, out io.Writer) error {
 		return err
 	}
 	defer store.Close()
-	a := app{store: store, ctx: martin.Context{Actor: *actor, Role: *role}}
+	a := app{
+		store:      store,
+		ctx:        martin.Context{Actor: *actor, Role: *role},
+		storeDir:   *storeDir,
+		jaybaseURL: strings.TrimSpace(*jaybaseURL),
+		cacheDir:   *cacheDir,
+	}
 
 	switch rest[0] {
 	case "init":
@@ -130,6 +139,8 @@ func run(args []string, out io.Writer) error {
 		return a.importJSON(rest[1:], out)
 	case "snapshot":
 		return a.snapshot(rest[1:], out)
+	case "mcp":
+		return a.mcp(rest[1:], out)
 	default:
 		return fmt.Errorf("unknown command %q", rest[0])
 	}
@@ -757,6 +768,7 @@ Core:
   import-json --file FILE
   snapshot create --name NAME
   version
+  mcp [--http ADDR]
 
 Organizations:
   organization create --name NAME [--domain DOMAIN] [--email EMAIL] [--phone PHONE] [--owner ID] [--tags a,b]
@@ -803,7 +815,11 @@ Global flags:
   --jaybase-url HTTPS_ORIGIN (or JAYBASE_URL; token from JAYBASE_TOKEN)
   --cache-dir DIR (or MARTIN_CACHE_DIR; encrypted hosted checkpoint)
   --actor USER_ID
-  --role ROLE`)
+  --role ROLE
+
+MCP HTTP:
+  --http ADDR binds loopback Streamable HTTP (example 127.0.0.1:8879). Omit for stdio.
+  MARTIN_MCP_TOKEN or MARTIN_MCP_TOKEN_FILE is required for HTTP and is separate from JAYBASE_TOKEN.`)
 	return err
 }
 

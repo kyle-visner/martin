@@ -23,7 +23,7 @@ directly. The CLI is the supported interface.
 
 ## Install
 
-Martin requires Go 1.26.5 or later. Earlier Go releases must not be used to
+Martin requires Go 1.26.6 or later. Earlier Go releases must not be used to
 build Martin release binaries. Install it from a repository checkout:
 
 ```sh
@@ -68,6 +68,8 @@ Rules for hosted mode:
 - `JAYBASE_URL` must be an HTTPS origin with no credentials, path, query, or
   fragment. Plain HTTP is accepted only for a loopback development server.
 - `JAYBASE_TOKEN` is required and is accepted only through the environment.
+- HTTP MCP requires `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, separate
+  from `JAYBASE_TOKEN`. Do not reuse the Jaybase token as the MCP bearer.
 - Never put the token in a URL, argument, input file, payload, log, prompt
   transcript, or idempotency key.
 - Do not combine an explicit `--store` with `JAYBASE_URL` or `--jaybase-url`.
@@ -91,6 +93,10 @@ Global flags must appear before the command:
 --actor USER_ID
 --role ROLE
 ```
+
+`mcp [--http ADDR]` is a first-class command on that same parser. Global flags
+still precede it. `--http` is a loopback Streamable HTTP bind; omit it for
+stdio.
 
 Omit `--role` normally. If supplied, it must exactly match the role assigned to
 the actor; it cannot elevate privileges.
@@ -138,6 +144,21 @@ Common codes include:
 
 The CLI has no human-readable output mode. `martin help` prints the top-level
 command list; use this guide and the README for command-specific contracts.
+
+MCP is an additional pathway over the same operations. It does not replace
+init. Initialize with the CLI, then start the server with the process actor
+already bound:
+
+```sh
+martin --actor owner init --currency USD
+export MARTIN_MCP_TOKEN='mcp-token-from-the-secret-manager'
+martin --actor owner mcp --http 127.0.0.1:8879
+```
+
+`--http` must be a loopback `host:port` such as `127.0.0.1:8879`. Omit it for
+stdio. HTTP requires `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, which is
+separate from `JAYBASE_TOKEN`. Clients cannot choose the actor. Tool results
+use JSON-object `structuredContent`; list tools wrap arrays in objects.
 
 ## Non-negotiable CRM rules
 
@@ -285,6 +306,7 @@ audit
 import-json --file FILE
 snapshot create --name NAME
 version
+mcp [--http ADDR]
 
 organization create --name NAME [--domain DOMAIN] [--email EMAIL] [--phone PHONE] [--owner ID] [--tags a,b] [--id ID]
 organization update --id ID [fields]
