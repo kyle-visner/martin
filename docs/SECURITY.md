@@ -25,6 +25,9 @@ governance programs for Martin. It is not a certification claim.
 - Bulk imports require `(source, source_key)` and are digest-idempotent.
 - Audit output is metadata-only.
 - Snapshot refs use the `martin-` prefix and protect the complete shared root.
+- HTTP MCP requires a loopback bind and a bearer token from
+  `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, separate from `JAYBASE_TOKEN`.
+  The process `--actor` is bound at server start.
 - Pull requests and tagged releases run tests, race detection, vet, module
   verification, and pinned `govulncheck` scanning with Go 1.26.5.
 
@@ -61,6 +64,9 @@ separately below.
 - Provide Jaybase data keys and bearer tokens from a secret manager or other
   private store. Never put `JAYBASE_TOKEN` in a flag, URL, payload, log,
   prompt transcript, or idempotency key.
+- HTTP MCP requires `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, separate
+  from `JAYBASE_TOKEN`. Bind `--http` to loopback only. Do not reuse the
+  Jaybase token as the MCP bearer token.
 - Keep `MARTIN_CACHE_DIR` private to the operator account. Do not share
   checkpoints across machines or users.
 - Treat decrypted JSON output, local stores, import bundles, and hosted
