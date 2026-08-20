@@ -29,7 +29,7 @@ governance programs for Martin. It is not a certification claim.
   `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, separate from `JAYBASE_TOKEN`.
   The process `--actor` is bound at server start.
 - Pull requests and tagged releases run tests, race detection, vet, module
-  verification, and pinned `govulncheck` scanning with Go 1.26.5.
+  verification, and pinned `govulncheck` scanning with Go 1.26.6.
 
 ## Access model
 

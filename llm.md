@@ -23,7 +23,7 @@ directly. The CLI is the supported interface.
 
 ## Install
 
-Martin requires Go 1.26.5 or later. Earlier Go releases must not be used to
+Martin requires Go 1.26.6 or later. Earlier Go releases must not be used to
 build Martin release binaries. Install it from a repository checkout:
 
 ```sh

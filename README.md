@@ -15,7 +15,7 @@ JSON imports. The CLI checks access and CRM invariants before appending an
 encrypted, immutable event to
 [Jaybase](https://github.com/kyle-visner/jaybase).
 
-Requires Go 1.26.5 or later. Earlier Go releases include known standard-library
+Requires Go 1.26.6 or later. Earlier Go releases include known standard-library
 vulnerabilities and must not be used to build release binaries:
 
 ```sh
@@ -111,7 +111,7 @@ Every open deal has exactly one pending next action.
 
 ## Build and verify
 
-Use Go 1.26.5 or later. From the repository root:
+Use Go 1.26.6 or later. From the repository root:
 
 ```sh
 go mod verify
