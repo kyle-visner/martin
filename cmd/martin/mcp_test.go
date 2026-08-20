@@ -230,8 +230,16 @@ func TestMCPWrapsArrayInvokeResultAsObject(t *testing.T) {
 	body := asMap(t, raw.Result)
 	content := asMap(t, body["structuredContent"])
 	assertJSONObject(t, "wrapped array", content)
-	items, ok := content["items"].([]any)
-	if !ok || len(items) != 2 {
+	switch items := content["items"].(type) {
+	case []string:
+		if len(items) != 2 {
+			t.Fatalf("expected items array, got %#v", content)
+		}
+	case []any:
+		if len(items) != 2 {
+			t.Fatalf("expected items array, got %#v", content)
+		}
+	default:
 		t.Fatalf("expected items array, got %#v", content)
 	}
 }

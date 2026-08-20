@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 )
 
 // CRM is the first-class programmatic CRM API. The CLI and the MCP server
@@ -584,18 +583,6 @@ func (in personUpdateArgs) apply(entity *Person) {
 	if in.Tags != nil {
 		entity.Tags = *in.Tags
 	}
-}
-
-func parseOccurredAt(raw string) (time.Time, error) {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return time.Time{}, nil
-	}
-	value, err := time.Parse(time.RFC3339, raw)
-	if err != nil {
-		return time.Time{}, appErr(ErrValidation, "occurred_at must use RFC3339")
-	}
-	return value.UTC(), nil
 }
 
 func decodeParams[T any](raw json.RawMessage, dest *T) error {
