@@ -178,7 +178,8 @@ func (s *Store) ReopenDeal(ctx Context, dealID, reason, nextAction, nextDue stri
 	if isOpenStage(deal.Stage) {
 		return Deal{}, Task{}, "", appErr(ErrConflict, "deal %s is already open", deal.ID)
 	}
-	if strings.TrimSpace(reason) == "" {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
 		return Deal{}, Task{}, "", appErr(ErrValidation, "reopen reason is required")
 	}
 	stage := deal.PreviousStage
@@ -196,8 +197,8 @@ func (s *Store) ReopenDeal(ctx Context, dealID, reason, nextAction, nextDue stri
 		return Deal{}, Task{}, "", err
 	}
 	deal.NextTaskID = task.ID
-	root, err := s.appendAt(ctx, TypeDealReopened, deal.ID, "deal reopen: "+strings.TrimSpace(reason), dealWorkflowPayload{
-		Deal: deal, NextTask: &task,
+	root, err := s.appendAt(ctx, TypeDealReopened, deal.ID, commandDealReopen, dealWorkflowPayload{
+		Deal: deal, NextTask: &task, Reason: reason,
 	}, st.Root)
 	return deal, task, root, err
 }

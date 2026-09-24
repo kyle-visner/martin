@@ -36,6 +36,11 @@ const (
 	TypeCustomerLinkCreated  = "martin.customer-link.created.v1"
 	TypeCustomerLinkRemoved  = "martin.customer-link.removed.v1"
 	TypeImportApplied        = "martin.import.applied.v1"
+
+	// commandDealReopen is the exact catalog command for TypeDealReopened.
+	// The audit reason lives on dealWorkflowPayload.Reason. Older facts may
+	// still use "deal reopen: …"; replay does not match on command text.
+	commandDealReopen = "deal reopen"
 )
 
 type storageBackend interface {
@@ -79,6 +84,7 @@ type dealWorkflowPayload struct {
 	CompletedTask *Task     `json:"completed_task,omitempty"`
 	NextTask      *Task     `json:"next_task,omitempty"`
 	Activity      *Activity `json:"activity,omitempty"`
+	Reason        string    `json:"reason,omitempty"`
 }
 
 type mergePayload struct {
@@ -357,6 +363,8 @@ func (s *Store) applyNode(st *State, node jaybase.Node) error {
 		st.People[event.FromID] = from
 		repointPerson(st, event.FromID, event.IntoID)
 	case TypeDealCreated, TypeDealAdvanced, TypeDealTouched, TypeDealWon, TypeDealLost, TypeDealReopened:
+		// Deal facts project from the event type and payload. martin.deal.reopened.v1
+		// accepts both the exact command "deal reopen" and historical "deal reopen: …".
 		var event dealWorkflowPayload
 		if err := json.Unmarshal(payload, &event); err != nil {
 			return err
