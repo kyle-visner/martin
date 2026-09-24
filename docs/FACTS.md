@@ -21,7 +21,7 @@ schema identifier and is always prefixed with `martin.`.
 | `martin.deal.touched.v1` | Log an activity and replace the next action atomically |
 | `martin.deal.won.v1` | Win a deal and close its next action |
 | `martin.deal.lost.v1` | Lose a deal and close its next action |
-| `martin.deal.reopened.v1` | Reopen a closed deal with an audit reason and next action |
+| `martin.deal.reopened.v1` | Reopen a closed deal. Command is `deal reopen`; the audit reason is payload `reason` |
 | `martin.activity.logged.v1` | Add an immutable interaction |
 | `martin.task.created.v1` | Add a relationship follow-up task |
 | `martin.task.completed.v1` | Complete a non-deal task |
@@ -32,6 +32,25 @@ schema identifier and is always prefixed with `martin.`.
 
 Unknown `martin.*` event types fail closed during replay. Other application
 namespaces are ignored while Martin still advances its state root across them.
+
+## Jaybase write grammar
+
+Martin facts match the Jaybase catalog grammar from
+[jaybase#20](https://github.com/kyle-visner/jaybase/pull/20) (`a4529fa`). Martin
+does not install a catalog and does not turn enforcement on, so existing
+stores keep open writes.
+
+- Every type is `namespace.name` in the single namespace `martin`, including
+  `martin.customer-link.created.v1`. One pattern `martin.*` covers the table
+  above.
+- Commands are exact strings of letters, digits, spaces, dots, underscores, or
+  hyphens. `deal reopen` is the reopen command. The reason is the payload
+  field `reason`, not part of the command.
+- Facts already stored as `deal reopen: …` stay valid. Replay selects
+  `martin.deal.reopened.v1` and the payload; it does not filter on command
+  text, so those older facts still project.
+- Snapshot refs are `martin-` plus a file-safe name, which matches
+  `allow.refs` pattern `martin-*`.
 
 ## Magpie bridge
 
