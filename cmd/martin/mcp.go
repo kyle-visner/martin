@@ -224,7 +224,7 @@ func emptyObject(raw json.RawMessage) []byte {
 
 func (a app) mcp(args []string, _ io.Writer) error {
 	fs := newFlagSet("mcp")
-	httpAddr := fs.String("http", "", "Streamable HTTP listen address, for example 127.0.0.1:8879. Default is stdio.")
+	httpAddr := fs.String("http", "", "Streamable HTTP listen address, for example 127.0.0.1:8879 or :8879 (requires MARTIN_MCP_TOKEN). Default is stdio.")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -239,7 +239,11 @@ func (a app) mcp(args []string, _ io.Writer) error {
 		var store *martin.Store
 		var err error
 		if hosted {
-			store, err = martin.OpenRemoteStoreWithOptions(a.jaybaseURL, os.Getenv("JAYBASE_TOKEN"), martin.RemoteStoreOptions{
+			token, tokenErr := martin.SecretFromEnv("JAYBASE_TOKEN")
+			if tokenErr != nil {
+				return nil, nil, tokenErr
+			}
+			store, err = martin.OpenRemoteStoreWithOptions(a.jaybaseURL, token, martin.RemoteStoreOptions{
 				CacheDir: cacheDir,
 			})
 		} else {
@@ -252,7 +256,7 @@ func (a app) mcp(args []string, _ io.Writer) error {
 	}
 	server := newMCPServerFromOpener(open)
 	if strings.TrimSpace(*httpAddr) != "" {
-		if err := requireLoopbackHTTPAddr(*httpAddr); err != nil {
+		if err := validateHTTPAddr(*httpAddr); err != nil {
 			return err
 		}
 		mcpToken, err := martin.SecretFromEnv("MARTIN_MCP_TOKEN")
@@ -267,21 +271,14 @@ func (a app) mcp(args []string, _ io.Writer) error {
 	return serveMCPStdio(os.Stdin, os.Stdout, server)
 }
 
-func requireLoopbackHTTPAddr(addr string) error {
-	host, _, err := net.SplitHostPort(strings.TrimSpace(addr))
-	if err != nil {
-		return fmt.Errorf("http address must be host:port, for example 127.0.0.1:8879")
-	}
-	host = strings.Trim(host, "[]")
-	if host == "" {
-		return fmt.Errorf("HTTP MCP must bind loopback (for example 127.0.0.1:8879)")
-	}
-	if strings.EqualFold(host, "localhost") {
-		return nil
-	}
-	ip := net.ParseIP(host)
-	if ip == nil || !ip.IsLoopback() {
-		return fmt.Errorf("HTTP MCP must bind loopback (for example 127.0.0.1:8879)")
+// validateHTTPAddr checks that --http is host:port. Any interface may be
+// bound (for example ":8879" inside a container network): every request to
+// /mcp still needs the MARTIN_MCP_TOKEN bearer token, which mcp() requires
+// before it listens. This is the same rule as Magpie's MCP server.
+func validateHTTPAddr(addr string) error {
+	_, port, err := net.SplitHostPort(strings.TrimSpace(addr))
+	if err != nil || strings.TrimSpace(port) == "" {
+		return fmt.Errorf("http address must be host:port, for example 127.0.0.1:8879 or :8879")
 	}
 	return nil
 }

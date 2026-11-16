@@ -95,7 +95,8 @@ Global flags must appear before the command:
 ```
 
 `mcp [--http ADDR]` is a first-class command on that same parser. Global flags
-still precede it. `--http` is a loopback Streamable HTTP bind; omit it for
+still precede it. `--http` is a Streamable HTTP `host:port` bind (token
+required); omit it for
 stdio.
 
 Omit `--role` normally. If supplied, it must exactly match the role assigned to
@@ -155,7 +156,8 @@ export MARTIN_MCP_TOKEN='mcp-token-from-the-secret-manager'
 martin --actor owner mcp --http 127.0.0.1:8879
 ```
 
-`--http` must be a loopback `host:port` such as `127.0.0.1:8879`. Omit it for
+`--http` must be a `host:port` such as `127.0.0.1:8879`, or `:8879` inside a
+private container network. Omit it for
 stdio. HTTP requires `MARTIN_MCP_TOKEN` or `MARTIN_MCP_TOKEN_FILE`, which is
 separate from `JAYBASE_TOKEN`. Clients cannot choose the actor. Tool results
 use JSON-object `structuredContent`; list tools wrap arrays in objects.

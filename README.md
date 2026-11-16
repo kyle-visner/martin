@@ -203,14 +203,21 @@ Operational rules for agents:
 
 MCP is an additional pathway over the same CRM operations. Init remains the
 CLI. The process `--actor` is bound at server start; clients cannot choose it.
-HTTP requires a loopback bind and a bearer token from `MARTIN_MCP_TOKEN` or
-`MARTIN_MCP_TOKEN_FILE`, separate from `JAYBASE_TOKEN`:
+HTTP requires a bearer token from `MARTIN_MCP_TOKEN` or
+`MARTIN_MCP_TOKEN_FILE`, separate from `JAYBASE_TOKEN` (which can also come
+from `JAYBASE_TOKEN_FILE`). Without a token it refuses to start. It binds the
+address you give it: loopback on a workstation, `:8879` inside a private
+container network, never a public interface without TLS in front:
 
 ```sh
 export MARTIN_MCP_TOKEN='mcp-token-from-the-secret-manager'
 
 ./martin --actor owner mcp --http 127.0.0.1:8879
 ```
+
+The `Dockerfile` builds a distroless image (static binary, CA roots, uid
+65532) that runs `--actor owner mcp --http :8879`; give it `JAYBASE_URL`,
+`JAYBASE_TOKEN_FILE` and `MARTIN_MCP_TOKEN_FILE`.
 
 Omit `--http` for stdio. `GET /health` returns 200. Hosted Jaybase still uses
 `JAYBASE_URL` and `JAYBASE_TOKEN` as today:

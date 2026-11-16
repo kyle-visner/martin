@@ -1,0 +1,7 @@
+.git
+.github
+.martin
+/martin
+dist
+coverage.out
+*.test
