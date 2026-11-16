@@ -8,7 +8,7 @@
 #     martin --actor owner mcp --http :8879
 #
 # HTTP MCP refuses to start without MARTIN_MCP_TOKEN(_FILE).
-FROM --platform=$BUILDPLATFORM golang:1.26.6-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.26.11-alpine AS build
 
 ARG TARGETOS
 ARG TARGETARCH
