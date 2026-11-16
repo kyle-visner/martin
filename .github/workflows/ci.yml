@@ -22,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.6
+          go-version: 1.26.11
           check-latest: false
           cache: true
 
@@ -49,3 +49,38 @@ jobs:
       - name: Scan for reachable vulnerabilities
         run: |
           "${RUNNER_TEMP}/bin/govulncheck" ./...
+
+  image:
+    name: Container image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: docker build -t martin:ci .
+
+      - name: Serve MCP on all interfaces and check auth
+        run: |
+          docker run -d --name martin-ci -p 127.0.0.1:18879:8879 \
+            --read-only --tmpfs /tmp:uid=65532,gid=65532 \
+            -e MARTIN_MCP_TOKEN=ci-only-token \
+            martin:ci --store /tmp/store --actor owner mcp --http :8879
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:18879/health && break; sleep 1; done
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18879/health)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18879/mcp -d '{}')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Authorization: Bearer ci-only-token' \
+            -H 'Content-Type: application/json' http://127.0.0.1:18879/mcp \
+            -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26"}}')" = 200
+
+      - name: Refuse HTTP without a token
+        run: |
+          if docker run --rm --read-only --tmpfs /tmp:uid=65532,gid=65532 martin:ci \
+               --store /tmp/store --actor owner mcp --http :8879; then
+            echo "expected martin to refuse HTTP MCP without MARTIN_MCP_TOKEN" >&2; exit 1
+          fi
+
+      - name: Logs
+        if: always()
+        run: docker logs martin-ci || true

@@ -60,7 +60,12 @@ func run(args []string, out io.Writer) error {
 	var store *martin.Store
 	var err error
 	if strings.TrimSpace(*jaybaseURL) != "" {
-		store, err = martin.OpenRemoteStoreWithOptions(*jaybaseURL, os.Getenv("JAYBASE_TOKEN"), martin.RemoteStoreOptions{
+		var token string
+		token, err = martin.SecretFromEnv("JAYBASE_TOKEN")
+		if err != nil {
+			return err
+		}
+		store, err = martin.OpenRemoteStoreWithOptions(*jaybaseURL, token, martin.RemoteStoreOptions{
 			CacheDir: *cacheDir,
 		})
 	} else {
@@ -812,7 +817,7 @@ Bookkeeping bridge:
 
 Global flags:
   --store DIR
-  --jaybase-url HTTPS_ORIGIN (or JAYBASE_URL; token from JAYBASE_TOKEN)
+  --jaybase-url HTTPS_ORIGIN (or JAYBASE_URL; token from JAYBASE_TOKEN or JAYBASE_TOKEN_FILE)
   --cache-dir DIR (or MARTIN_CACHE_DIR; encrypted hosted checkpoint)
   --actor USER_ID
   --role ROLE

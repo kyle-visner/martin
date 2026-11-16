@@ -267,7 +267,7 @@ func TestMCPStdioRoundTrip(t *testing.T) {
 	}
 }
 
-func TestMCPHTTPRequiresTokenAndLoopback(t *testing.T) {
+func TestMCPHTTPRequiresToken(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "store")
 	var out bytes.Buffer
 	if err := run([]string{"--store", dir, "--actor", "owner", "init", "--currency", "USD"}, &out); err != nil {
@@ -276,13 +276,18 @@ func TestMCPHTTPRequiresTokenAndLoopback(t *testing.T) {
 
 	t.Setenv("MARTIN_MCP_TOKEN", "")
 	t.Setenv("MARTIN_MCP_TOKEN_FILE", "")
-	if err := run([]string{"--store", dir, "--actor", "owner", "mcp", "--http", "127.0.0.1:8879"}, &bytes.Buffer{}); err == nil {
-		t.Fatal("expected HTTP MCP without token to fail")
+	for _, addr := range []string{"127.0.0.1:8879", ":8879", "0.0.0.0:8879"} {
+		err := run([]string{"--store", dir, "--actor", "owner", "mcp", "--http", addr}, &bytes.Buffer{})
+		if err == nil || !strings.Contains(err.Error(), "MARTIN_MCP_TOKEN") {
+			t.Fatalf("expected HTTP MCP on %s without token to fail on the token, got %v", addr, err)
+		}
 	}
 
 	t.Setenv("MARTIN_MCP_TOKEN", "secret")
-	if err := run([]string{"--store", dir, "--actor", "owner", "mcp", "--http", "0.0.0.0:8879"}, &bytes.Buffer{}); err == nil {
-		t.Fatal("expected non-loopback HTTP bind to fail")
+	for _, addr := range []string{"8879", "127.0.0.1", "[::1]", "127.0.0.1:"} {
+		if err := run([]string{"--store", dir, "--actor", "owner", "mcp", "--http", addr}, &bytes.Buffer{}); err == nil {
+			t.Fatalf("expected malformed HTTP address %q to fail", addr)
+		}
 	}
 
 	t.Setenv("MARTIN_MCP_TOKEN_FILE", filepath.Join(t.TempDir(), "missing"))
